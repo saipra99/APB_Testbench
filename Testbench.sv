@@ -1,3 +1,5 @@
+// Code your testbench here
+// or browse Examples
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 
@@ -37,7 +39,7 @@ class base_sequence extends uvm_sequence #(Packet);
   
   rand int num;
   
-  constraint num_sequences{num inside{[7:15]};}
+  constraint num_sequences{soft num inside{[7:15]};}
   
   task body();
     
@@ -91,7 +93,9 @@ class driver extends uvm_driver #(Packet);  //REQ,RSP
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     
-    m_vif=m_cfg.apb_vif;
+    //m_vif=m_cfg.apb_vif;
+    if(! uvm_config_db #(virtual apb_if)::get(this,"", "apb_if", m_vif))
+      `uvm_fatal(get_type_name(),"Couldn't get vif")
   endfunction
   
   //Packet m_pkt;  One can also  use this handle
@@ -163,7 +167,10 @@ class monitor extends uvm_monitor;
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     
-    m_vif=m_cfg.apb_vif;
+    //m_vif=m_cfg.apb_vif;
+    
+    if(!uvm_config_db#(virtual apb_if)::get(this,"", "apb_if",m_vif))
+      `uvm_fatal(get_type_name(),"Couldn't get vif handle")
     mon_analy_port=new("mon_analy_port",this);
   endfunction
   
@@ -178,18 +185,16 @@ class monitor extends uvm_monitor;
             apb_pkt.p_addr=m_vif.paddr;
             apb_pkt.p_write=m_vif.pwrite;
             
-            if(m_cfg.p_valid_val)
-              begin
+            
                 if(apb_pkt.p_write)
                   apb_pkt.p_wdata=m_vif.pwdata;
                 else
                   apb_pkt.p_rdata=m_vif.prdata;
-              end
-            else
+            /*else
               begin
                 apb_pkt.p_wdata=m_vif.pwdata;
                 apb_pkt.p_rdata=m_vif.prdata;
-              end
+              end*/
             
             mon_analy_port.write(apb_pkt);
           end
@@ -217,8 +222,8 @@ class apb_agent extends uvm_agent;
     super.build_phase(phase);
     
     
-    if(!uvm_config_db#(apb_config)::get(this,"*","m_cfg",m_cfg))
-      `uvm_fatal(get_type_name(),"Couldn't get the config object");
+    /*if(!uvm_config_db#(apb_config)::get(this,"*","m_cfg",m_cfg))
+      `uvm_fatal(get_type_name(),"Couldn't get the config object");*/
     
     if(get_is_active())
       begin
@@ -228,8 +233,8 @@ class apb_agent extends uvm_agent;
     
     mon=monitor::type_id::create("mon",this);
     
-    drv.m_cfg=m_cfg;
-    mon.m_cfg=m_cfg;
+    //drv.m_cfg=m_cfg;
+    //mon.m_cfg=m_cfg;
   endfunction
   
   virtual function void connect_phase(uvm_phase phase);
@@ -336,21 +341,37 @@ class apb_test extends uvm_test;
   virtual apb_if apb_vif;
   
   virtual function void build_phase(uvm_phase phase);
+    
+    uvm_factory factory = uvm_factory::get();
     super.build_phase(phase);
     
     env=apb_environment::type_id::create("env",this);
     
-    if(!uvm_config_db#(virtual apb_if)::get(this,"","m_apb_if",apb_vif))
+    if(!uvm_config_db#(virtual apb_if)::get(this,"","apb_if",apb_vif))
       `uvm_fatal(get_type_name(),"Couldn't get vif handle from configuration object")
       
-      m_cfg=apb_config::type_id::create("m_cfg");
+    uvm_config_db#(virtual apb_if)::set(this,"env.apb_agnt.*","apb_if",apb_vif);
+      
+     /* m_cfg=apb_config::type_id::create("m_cfg");
       m_cfg.apb_vif=apb_vif;
     
-    uvm_config_db#(apb_config)::set(this,"*apb_agnt*","m_cfg",m_cfg);
+    uvm_config_db#(apb_config)::set(this,"*apb_agnt*","m_cfg",m_cfg);*/
    
     m_apb_seq=base_sequence::type_id::create("m_apb_seq");
+    
   endfunction
   
+  
+   function void end_of_elaboration_phase(uvm_phase phase);
+     super.end_of_elaboration_phase(phase);
+     this.print();
+     //factory.print();
+     
+     `uvm_info(get_type_name(),"End of elaboration phase debug",UVM_LOW)
+   endfunction
+  
+     
+     
   virtual task reset_phase(uvm_phase phase);
     super.reset_phase(phase);
     phase.raise_objection(this);
@@ -364,12 +385,17 @@ class apb_test extends uvm_test;
   virtual task main_phase(uvm_phase phase);
     super.main_phase(phase);
     
+    
     phase.raise_objection(this);
+    
+    void'(m_apb_seq.randomize() with {num==15;});
     
     m_apb_seq.start(env.apb_agnt.seqr);
     
     phase.drop_objection(this);
   endtask
+  
+    
 endclass
 
 
@@ -385,7 +411,7 @@ module top;
   
   initial
     begin
-  uvm_config_db#(virtual apb_if)::set(null,"uvm_test_top", "m_apb_if", m_apb_if);
+  uvm_config_db#(virtual apb_if)::set(null,"uvm_test_top", "apb_if", m_apb_if);
       run_test("apb_test");
     end
   
