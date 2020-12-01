@@ -17,7 +17,7 @@ module APB_slave#(A_WIDTH=8, D_WIDTH=8, DEPTH=16,RESET_VAL='h12)
             R_PHASE=3;
   
   logic [1:0] state;
-  logic [D_WIDTH-1:0] apb_mem[DEPTH];
+  logic [D_WIDTH-1:0] apb_mem[0:DEPTH-1];
   
   always @(posedge p_clk)
     begin
