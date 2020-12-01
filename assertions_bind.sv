@@ -80,8 +80,22 @@ module APB_assert(
             @(posedge p_clk)
             ((setup && !p_sel)|-> (state==IDLE_PHASE));
           endproperty
+   
+  //#7) Check whether control,addr bus values are stable if PREADY is not high.
   
+         property stable_sig;
+           disable iff(!p_rstn||state==SETUP_PHASE)
+           @(posedge p_clk)
+           (!p_ready |-> ($stable(addr) && $stable(p_sel) && $stable(p_write) && $stable(p_enable)));
+         endproperty
   
+  /* property stable_sig;
+           disable iff(!p_rstn)
+      @(state==R_PHASE||W_PHASE)
+           !p_ready |-> ($stable(addr) && $stable(p_sel) && $stable(p_write) && $stable(p_enable));         //Can also be written like this
+         endproperty                                                                                         
+  */
+ 
   
   ERR_CHECK_RST_VAL: assert property (check_rstn_state)
     $display("Successful RESET");
@@ -102,6 +116,9 @@ module APB_assert(
     
   ERR_CHECK_READ_CONTENTS: assert property (check_rd_data)
     $display("Ready success");
+    
+  ERR_CHECK_STABLE_SIG: assert property (stable_sig)
+    $display("Signals are stable");    
 
   
 endmodule
@@ -145,11 +162,11 @@ module tb();
       p_rstn=0; p_sel=0; p_enable=0; p_write=0; p_addr=0; 
       
       #20;
-      p_rstn=1; p_sel=1; p_enable=0; p_write=1; p_addr='h45; 
+      p_rstn=1; p_sel=1; p_enable=0; p_write=1; p_addr='h45; p_ready=0;
       #40;
-      p_enable=1;
+      p_enable=1; p_ready=1;
       #20;
-      p_sel=0;
+      p_sel=0; p_ready=0;
       #20;
       p_rstn=1; p_sel=1; p_enable=0; p_write=0; p_addr='h65;
       #40;
