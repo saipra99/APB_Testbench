@@ -7,6 +7,7 @@ module APB_slave#(A_WIDTH=8, D_WIDTH=8, DEPTH=16,RESET_VAL='h12)
     input logic [A_WIDTH-1:0] p_addr,
     input logic [D_WIDTH-1:0] wr_data,
     output logic [D_WIDTH-1:0] rd_data,
+    input logic p_slverr;
     input logic p_ready);
   
   
