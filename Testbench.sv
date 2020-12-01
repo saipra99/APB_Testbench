@@ -22,7 +22,7 @@ class Packet extends uvm_sequence_item;
     `uvm_field_int(p_write,UVM_ALL_ON)
   `uvm_object_utils_end
   
-  function string convert2str();
+  function string convert2str() ;
     return $sformatf("addr =0x%0h write =%0d wdata= 0x%0h rdata =0x%0h", p_addr,p_write, p_wdata,p_rdata);
   endfunction
   
