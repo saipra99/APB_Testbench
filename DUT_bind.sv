@@ -26,7 +26,7 @@ module APB_assert(
              W_PHASE=2,
              R_PHASE=3;
   
-  parameter RESET_VAL='h12;
+  parameter RESET_VAL='h12 ;
   
   let setup=(state==SETUP_PHASE);
   
