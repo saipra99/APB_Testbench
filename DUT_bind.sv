@@ -152,7 +152,7 @@ module APB_assert(
       $display("Checked for error transfers");
   
   ERR_CHECK_STABLE_SIG: assert property(stable_sig)
-      $display("Checked if signals are stable);
+    $display("Checked if signals are stable");
   
 endmodule
 
