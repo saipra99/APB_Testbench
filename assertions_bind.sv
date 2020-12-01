@@ -42,7 +42,7 @@ module APB_assert(
   
   //#3) Check if R_PHASE when p_write is not high.
   
-    property check_state_r;
+    property check_state_r ;
       disable iff(!p_rstn||p_enable||p_write)
       @(posedge p_clk)
       ((p_sel && !p_write)|=> (state==R_PHASE));
