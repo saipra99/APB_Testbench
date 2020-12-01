@@ -7,7 +7,7 @@ module APB_slave#(A_WIDTH=8, D_WIDTH=8, DEPTH=16,RESET_VAL='h12)
     input logic [A_WIDTH-1:0] p_addr,
     input logic [D_WIDTH-1:0] wr_data,
     output logic [D_WIDTH-1:0] rd_data,
-   output logic p_ready);
+    input logic p_ready);
   
   
   parameter IDLE_PHASE=0,
@@ -22,10 +22,7 @@ module APB_slave#(A_WIDTH=8, D_WIDTH=8, DEPTH=16,RESET_VAL='h12)
     begin
       if(!p_rstn)
         begin
-          rd_data=RESET_VAL;
-          ERR_RD_DATA: assert(rd_data=='h12)
-          else
-            $display("Failed");
+          rd_data<=RESET_VAL;
           state<=IDLE_PHASE;
           p_ready<=0;
         end
@@ -44,7 +41,7 @@ module APB_slave#(A_WIDTH=8, D_WIDTH=8, DEPTH=16,RESET_VAL='h12)
           
           SETUP_PHASE:
             begin
-              if(p_sel && p_rstn)
+              if(p_sel && p_rstn && !p_ready)
                 begin
                   if(p_write)
                     state<=W_PHASE;
@@ -57,20 +54,27 @@ module APB_slave#(A_WIDTH=8, D_WIDTH=8, DEPTH=16,RESET_VAL='h12)
           
           W_PHASE:
             begin
-              if(p_sel && p_enable && p_rstn)
+              if(p_sel && p_enable && p_rstn && p_ready && !p_slverr)
                 begin
                   apb_mem[p_addr]<=wr_data;
                 end
-              
+              else 
+                if(!p_ready)
+                  state<=W_PHASE;
+              else
                state<=SETUP_PHASE;
             end
           
           R_PHASE:
             begin
-              if(p_sel && p_enable && p_rstn)
+              if(p_sel && p_enable && p_rstn && p_ready && !p_slverr)
                 begin
                   rd_data<=apb_mem[p_addr];
                 end
+              else
+                if(!p_ready)
+                  state<=R_PHASE;
+              else
               state<=SETUP_PHASE;
             end
         endcase
