@@ -25,14 +25,14 @@ module APB_assert(
   
   let setup=(state==SETUP_PHASE);
   
-  //#1) Check if wr_data and in IDLE phase data is RESET VAL
+  //#1) Check if wr_data and RESET VAL when in  IDLE phase.
   
      property check_rstn_state;
        @(posedge p_clk)
        (!(p_rstn) |-> (rd_data=='h12));
      endproperty
   
-  //#2) Check if W_PHASE when p_write high
+  //#2) Check if state is W_PHASE when p_write high.
   
      property check_state_w;
        disable iff(!p_rstn||p_enable||!p_write)
@@ -40,7 +40,7 @@ module APB_assert(
        ((p_sel && p_write)|=>(state==W_PHASE));
      endproperty
   
-  //#3) Check if R_PHASE when p_write not high
+  //#3) Check if R_PHASE when p_write is not high.
   
     property check_state_r;
       disable iff(!p_rstn||p_enable||p_write)
@@ -51,7 +51,7 @@ module APB_assert(
 
   
   
-  //4) Check if sel is high after access phase it goes back to SETUP
+  //4) Check whether after access phase if sel is high it goes back to SETUP phase.
       sequence rd_wr_phase;
         (state==R_PHASE||state==W_PHASE) ##1 p_sel;
       endsequence
@@ -65,7 +65,7 @@ module APB_assert(
   
       
   
-  //#5) Check if rd_data is zero in IDLE PHASE
+  //#5) Check if p_ready is zero in IDLE PHASE and data is RESET VAL
           
          property check_rd_data;
            disable iff(!p_rstn)
@@ -74,7 +74,7 @@ module APB_assert(
          endproperty
           
   
-  //#6) Check if sel not high after setup phase it goes back to IDLE
+  //#6) Check if sel not high after setup phase it goes back to IDLE phase.
           property back_idle; 
             disable iff(!p_rstn)
             @(posedge p_clk)
