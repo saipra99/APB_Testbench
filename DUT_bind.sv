@@ -103,10 +103,23 @@ module APB_assert(
           @(posedge p_clk)
           ( phase|-> ##1 (rd_data==RESET_VAL));
         endproperty
-
+   
+   
+  //#8) Check whether control,addr bus values are stable if PREADY is not high.
   
- 
-    
+         property stable_sig;
+           disable iff(!p_rstn||state==SETUP_PHASE)
+           @(posedge p_clk)
+           (!p_ready |-> ($stable(addr) && $stable(p_sel) && $stable(p_write) && $stable(p_enable)));
+         endproperty
+  
+  /* property stable_sig;
+           disable iff(!p_rstn)
+      @(state==R_PHASE||W_PHASE)
+           !p_ready |-> ($stable(addr) && $stable(p_sel) && $stable(p_write) && $stable(p_enable));         //Can also be written like this
+         endproperty                                                                                         
+  */
+     
  
   
   COVERAGE_RSTN: cover property(check_rstn_state);
@@ -137,7 +150,9 @@ module APB_assert(
     
   ERR_CHECK_SLVERR: assert property (check_slverr)
       $display("Checked for error transfers");
-
+  
+    ERR_CHECK_STABLE_SIG: assert property(stable_sig)
+      $display("Checked if signals are stable);
   
 endmodule
 
@@ -186,15 +201,15 @@ module tb();
       
       @(posedge p_clk);
       
-      p_rstn<=1; p_sel<=1; p_enable<=0; p_write<=1; p_addr<='h45; p_slverr<=0;
+      p_rstn<=1; p_sel<=1; p_enable<=0; p_write<=1; p_addr<='h45; p_slverr<=0; p_ready<=0;
       
       repeat(2) @(posedge p_clk);
       
-      p_enable=1;
+      p_enable=1; p_ready<=1;
       
       @(posedge p_clk);
       
-      p_sel=0;
+      p_sel=0; p_ready<=0;
       
      @(posedge p_clk);
       
@@ -202,23 +217,27 @@ module tb();
       
       repeat(2) @(posedge p_clk);
       
-      p_enable<=1;
+      p_enable<=1; p_ready<=1;
       
       @(posedge p_clk);
       
-      p_rstn<=1; p_sel<=1; p_enable<=0; p_write<=1; p_addr<='h55; p_slverr<=0;
+      p_rstn<=1; p_sel<=1; p_enable<=0; p_write<=1; p_addr<='h55; p_slverr<=0; p_ready<=0;
       
       repeat(2) @(posedge p_clk);
       
-      p_enable<=1;
+      p_enable<=1; p_ready<=0;
+      
+      repeat(3) @(posedge clk);                 //Checked for p_ready being low in access phase
+      
+      p_ready<=1;
       
       @(posedge p_clk);
       
-      p_rstn<=1; p_sel<=1; p_enable<=0; p_write<=0; p_addr<='h76; p_slverr<=0; 
+      p_rstn<=1; p_sel<=1; p_enable<=0; p_write<=0; p_addr<='h76; p_slverr<=0; p_ready<=0;
       
       repeat(2) @(posedge p_clk);
       
-      p_enable<=1;
+      p_enable<=1; p_ready<=1;
       
       @(posedge p_clk);
       
