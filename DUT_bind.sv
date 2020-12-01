@@ -28,7 +28,7 @@ module APB_assert(
   
   parameter RESET_VAL='h12 ;
   
-  let setup=(state==SETUP_PHASE);
+  let setup=(state==SETUP_PHASE) ;
   
   //#1) Check if wr_data and in IDLE phase data is RESET VAL
   
